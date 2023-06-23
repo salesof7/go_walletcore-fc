@@ -25,7 +25,7 @@ func (s *AccountDBTestSuite) SetupSuite() {
 	s.client, _ = entity.NewClient("John", "john@mail.com")
 }
 
-func (s *ClientDBTestSuite) TearDownSuite() {
+func (s *AccountDBTestSuite) TearDownSuite() {
 	defer s.db.Close()
 	s.db.Exec("DROP TABLE clients")
 	s.db.Exec("DROP TABLE accounts")
@@ -33,4 +33,22 @@ func (s *ClientDBTestSuite) TearDownSuite() {
 
 func TestAccountDBTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountDBTestSuite))
+}
+
+func (s *AccountDBTestSuite) TestSave() {
+	account := entity.NewAccount(s.client)
+	err := s.accountDB.Save(account)
+	s.Nil(err)
+}
+
+func (s *AccountDBTestSuite) TestFindByID() {
+	s.db.Exec("INSERT INTO clients (id, name, email, created_at) VALUES (?,?,?,?)", s.client.ID, s.client.Name, s.client.Email, s.client.CreatedAt)
+	account := entity.NewAccount(s.client)
+	err := s.accountDB.Save(account)
+	s.Nil(err)
+	accountDB, err := s.accountDB.FindByID(account.ID)
+	s.Nil(err)
+	s.Equal(account.ID, accountDB.ID)
+	s.Equal(account.Client.ID, accountDB.Client.ID)
+	s.Equal(account.Balance, accountDB.Balance)
 }
