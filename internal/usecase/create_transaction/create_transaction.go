@@ -3,6 +3,7 @@ package createtransaction
 import (
 	"github.com/salesof7/go_walletcore-fc/internal/entity"
 	"github.com/salesof7/go_walletcore-fc/internal/gateway"
+	"github.com/salesof7/go_walletcore-fc/pkg/events"
 )
 
 type CreateTransactionInputDTO struct {
@@ -18,12 +19,21 @@ type CreateTransactionOutputDTO struct {
 type CreateTransactionUseCase struct {
 	TransactionGateway gateway.TransactionGateway
 	AccountGateway     gateway.AccountGateway
+	EventDispatcher    *events.EventDispatcher
+	TransactionCreated events.EventInterface
 }
 
-func NewCreateTransactionUseCase(transactionGateway gateway.TransactionGateway, accountGateway gateway.AccountGateway) *CreateTransactionUseCase {
+func NewCreateTransactionUseCase(
+	transactionGateway gateway.TransactionGateway,
+	accountGateway gateway.AccountGateway,
+	eventDispatcher *events.EventDispatcher,
+	transactionCreated events.EventInterface,
+) *CreateTransactionUseCase {
 	return &CreateTransactionUseCase{
 		TransactionGateway: transactionGateway,
 		AccountGateway:     accountGateway,
+		EventDispatcher:    eventDispatcher,
+		TransactionCreated: transactionCreated,
 	}
 }
 
@@ -44,5 +54,10 @@ func (u *CreateTransactionUseCase) Execute(input CreateTransactionInputDTO) (*Cr
 	if err != nil {
 		return nil, err
 	}
-	return &CreateTransactionOutputDTO{ID: transaction.ID}, nil
+	output := &CreateTransactionOutputDTO{ID: transaction.ID}
+
+	u.TransactionCreated.SetPayload(output)
+	u.EventDispatcher.Dispatch(u.TransactionCreated)
+
+	return output, nil
 }

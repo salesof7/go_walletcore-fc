@@ -27,6 +27,10 @@ func (e *TestEvent) GetDateTime() time.Time {
 	return time.Now()
 }
 
+func (e *TestEvent) SetPayload(payload interface{}) {
+	e.Payload = payload
+}
+
 type TestEventHandler struct {
 	ID int
 }
@@ -131,6 +135,12 @@ func (s *EventDispatcherTestSuite) TestEventDispatcher_Dispatch() {
 	err := s.eventDispatcher.Register(s.event1.GetName(), eh)
 	s.Nil(err)
 	s.Equal(1, len(s.eventDispatcher.handlers[s.event1.GetName()]))
+
+	eh2 := &MockHandler{}
+	eh2.On("Handle", &s.event1)
+
+	s.eventDispatcher.Register(s.event1.GetName(), eh)
+	s.eventDispatcher.Register(s.event1.GetName(), eh2)
 
 	s.eventDispatcher.Dispatch(&s.event1)
 	eh.AssertExpectations(s.T())
