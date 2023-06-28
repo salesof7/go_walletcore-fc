@@ -1,4 +1,4 @@
-package createaccount
+package create_account
 
 import (
 	"github.com/salesof7/go_walletcore-fc/internal/entity"

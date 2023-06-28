@@ -1,4 +1,4 @@
-package createtransaction
+package create_transaction
 
 import (
 	"github.com/salesof7/go_walletcore-fc/internal/entity"
