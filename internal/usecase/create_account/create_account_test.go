@@ -4,44 +4,17 @@ import (
 	"testing"
 
 	"github.com/salesof7/go_walletcore-fc/internal/entity"
+	"github.com/salesof7/go_walletcore-fc/internal/usecase/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-type ClientGatewayMock struct {
-	mock.Mock
-}
-
-func (m *ClientGatewayMock) Save(client *entity.Client) error {
-	args := m.Called(client)
-	return args.Error(0)
-}
-
-func (m *ClientGatewayMock) Get(id string) (*entity.Client, error) {
-	args := m.Called(id)
-	return args.Get(0).(*entity.Client), args.Error(1)
-}
-
-type AccountGatewayMock struct {
-	mock.Mock
-}
-
-func (m *AccountGatewayMock) Save(account *entity.Account) error {
-	args := m.Called(account)
-	return args.Error(0)
-}
-
-func (m *AccountGatewayMock) FindByID(id string) (*entity.Account, error) {
-	args := m.Called(id)
-	return args.Get(0).(*entity.Account), args.Error(1)
-}
-
 func TestCreateAccountUseCase_Execute(t *testing.T) {
 	client, _ := entity.NewClient("John", "john@mail.com")
-	clientMock := &ClientGatewayMock{}
+	clientMock := &mocks.ClientGatewayMock{}
 	clientMock.On("Get", client.ID).Return(client, nil)
 
-	accountMock := &AccountGatewayMock{}
+	accountMock := &mocks.AccountGatewayMock{}
 	accountMock.On("Save", mock.Anything).Return(nil)
 
 	u := NewCreateAccountUseCase(accountMock, clientMock)
