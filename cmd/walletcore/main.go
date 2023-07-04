@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/salesof7/go_walletcore-fc/internal/database"
 	"github.com/salesof7/go_walletcore-fc/internal/event"
 	"github.com/salesof7/go_walletcore-fc/internal/event/handler"
@@ -34,7 +35,9 @@ func main() {
 
 	eventDispatcher := events.NewEventDispatcher()
 	eventDispatcher.Register("TransactionCreated", handler.NewTransactionCreatedKafkaHandler(kafkaProducer))
+	eventDispatcher.Register("BalanceUpdated", handler.NewUpdateBalanceKafkaHandler(kafkaProducer))
 	transactionCreatedEvent := event.NewTransactionCreated()
+	balanceUpdatedEvent := event.NewBalanceUpdated()
 
 	clientDb := database.NewClientDB(db)
 	accountDb := database.NewAccountDB(db)
@@ -46,9 +49,13 @@ func main() {
 		return database.NewAccountDB(db)
 	})
 
+	uow.Register("TransactionDB", func(tx *sql.Tx) interface{} {
+		return database.NewTransactionDB(db)
+	})
+
 	createClientUseCase := create_client.NewCreateClientUseCase(clientDb)
 	createAccountUseCase := create_account.NewCreateAccountUseCase(accountDb, clientDb)
-	createTransactionUseCase := create_transaction.NewCreateTransactionUseCase(uow, eventDispatcher, transactionCreatedEvent)
+	createTransactionUseCase := create_transaction.NewCreateTransactionUseCase(uow, eventDispatcher, transactionCreatedEvent, balanceUpdatedEvent)
 
 	webserver := webserver.NewWebServer(":8080")
 
